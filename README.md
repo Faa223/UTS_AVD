@@ -2,7 +2,6 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Laporan Analisis EDA - Retail Sales Dataset</title>
 </head>
 <body>
  
