@@ -1,633 +1,597 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EDA Retail Sales Dataset - Laporan Analisis</title>
+  <title>Laporan EDA — Retail Sales Dataset</title>
 </head>
-<body>
- 
-<h1>📊 Laporan EDA — Retail Sales Dataset</h1>
- 
-<blockquote>
-<p><strong>Dataset:</strong> 1.000 transaksi retail | <strong>Kolom:</strong> 9 | <strong>Tools:</strong> Python, Pandas, Matplotlib, Seaborn</p>
-</blockquote>
- 
-<hr>
- 
-<h2>Daftar Isi</h2>
- 
-<ol>
-  <li><a href="#pendahuluan">Pendahuluan</a></li>
-  <li><a href="#struktur-data">Struktur Data</a></li>
-  <li><a href="#kualitas-data">Kualitas Data</a></li>
-  <li><a href="#statistik-deskriptif">Statistik Deskriptif</a></li>
-  <li><a href="#distribusi-variabel">Distribusi Variabel Numerik</a></li>
-  <li><a href="#outliers">Deteksi Outliers</a></li>
-  <li><a href="#analisis-gender">Analisis Berdasarkan Gender</a></li>
-  <li><a href="#analisis-kategori">Analisis Berdasarkan Kategori Produk</a></li>
-  <li><a href="#analisis-temporal">Analisis Temporal</a></li>
-  <li><a href="#analisis-usia">Analisis Berdasarkan Kelompok Usia</a></li>
-  <li><a href="#gender-kategori">Hubungan Gender dan Kategori Produk</a></li>
-  <li><a href="#korelasi">Korelasi Fitur Numerik</a></li>
-  <li><a href="#ringkasan">Ringkasan &amp; Kesimpulan</a></li>
-</ol>
- 
-<hr>
- 
-<h2 id="pendahuluan">1. Pendahuluan</h2>
- 
-<p>Notebook ini melakukan <strong>Exploratory Data Analysis (EDA)</strong> pada dataset transaksi retail yang berisi informasi pelanggan, kategori produk, kuantitas, harga, dan total pembelian. Fokus analisis meliputi:</p>
- 
-<ul>
-  <li>Memahami pola distribusi data numerik</li>
-  <li>Segmentasi pelanggan berdasarkan gender dan usia</li>
-  <li>Tren temporal penjualan bulanan</li>
-  <li>Performa setiap kategori produk</li>
-</ul>
- 
-<hr>
- 
-<h2 id="struktur-data">2. Struktur Data</h2>
- 
-<p>Dataset memiliki <strong>1.000 baris</strong> dan <strong>9 kolom</strong> sebagai berikut:</p>
- 
-<table>
-  <thead>
-    <tr>
-      <th>Kolom</th>
-      <th>Tipe Data</th>
-      <th>Deskripsi</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>Transaction ID</code></td>
-      <td>object</td>
-      <td>ID unik setiap transaksi</td>
-    </tr>
-    <tr>
-      <td><code>Date</code></td>
-      <td>datetime</td>
-      <td>Tanggal transaksi (dikonversi ke datetime)</td>
-    </tr>
-    <tr>
-      <td><code>Customer ID</code></td>
-      <td>object</td>
-      <td>ID unik pelanggan</td>
-    </tr>
-    <tr>
-      <td><code>Gender</code></td>
-      <td>object</td>
-      <td>Jenis kelamin pelanggan (Male / Female)</td>
-    </tr>
-    <tr>
-      <td><code>Age</code></td>
-      <td>int64</td>
-      <td>Usia pelanggan (18–64 tahun)</td>
-    </tr>
-    <tr>
-      <td><code>Product Category</code></td>
-      <td>object</td>
-      <td>Kategori produk: Beauty, Clothing, Electronics</td>
-    </tr>
-    <tr>
-      <td><code>Quantity</code></td>
-      <td>int64</td>
-      <td>Jumlah produk yang dibeli (1–4 unit)</td>
-    </tr>
-    <tr>
-      <td><code>Price per Unit</code></td>
-      <td>float64</td>
-      <td>Harga satuan produk (25–500)</td>
-    </tr>
-    <tr>
-      <td><code>Total Amount</code></td>
-      <td>float64</td>
-      <td>Total nilai transaksi (25–2.000)</td>
-    </tr>
-  </tbody>
-</table>
- 
-<h3>Kode: Import dan Load Data</h3>
- 
-<pre><code>import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
- 
-sns.set(style="whitegrid")
- 
-df = pd.read_csv("retail_sales_dataset.csv")
-print("Shape:", df.shape)  # Output: (1000, 9)
-df.head()
-</code></pre>
- 
-<p>Setelah load, kolom <code>Date</code> dikonversi ke format <code>datetime</code> dan diturunkan fitur temporal tambahan:</p>
- 
-<pre><code>df["Date"]       = pd.to_datetime(df["Date"])
-df["year"]       = df["Date"].dt.year
-df["month"]      = df["Date"].dt.month
-df["day"]        = df["Date"].dt.day
-df["month_name"] = df["Date"].dt.strftime("%b")
-</code></pre>
- 
-<hr>
- 
-<h2 id="kualitas-data">3. Kualitas Data</h2>
- 
-<p>Pengecekan integritas data menunjukkan dataset dalam kondisi <strong>bersih</strong>:</p>
- 
-<table>
-  <thead>
-    <tr>
-      <th>Pemeriksaan</th>
-      <th>Hasil</th>
-      <th>Keterangan</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Missing Values</td>
-      <td>✅ 0</td>
-      <td>Tidak ada nilai kosong di seluruh kolom</td>
-    </tr>
-    <tr>
-      <td>Data Duplikat</td>
-      <td>✅ 0</td>
-      <td>Tidak ada baris duplikat</td>
-    </tr>
-    <tr>
-      <td>Nilai unik Gender</td>
-      <td>✅ 2</td>
-      <td>Hanya <code>Male</code> dan <code>Female</code></td>
-    </tr>
-    <tr>
-      <td>Nilai unik Kategori</td>
-      <td>✅ 3</td>
-      <td>Beauty, Clothing, Electronics</td>
-    </tr>
-  </tbody>
-</table>
- 
-<blockquote>
-<p>✅ <strong>Dataset siap dianalisis</strong> — tidak memerlukan proses data cleaning atau imputation.</p>
-</blockquote>
- 
-<hr>
- 
-<h2 id="statistik-deskriptif">4. Statistik Deskriptif</h2>
- 
-<p>Ringkasan statistik untuk kolom numerik utama:</p>
- 
-<table>
-  <thead>
-    <tr>
-      <th>Statistik</th>
-      <th>Age</th>
-      <th>Quantity</th>
-      <th>Price per Unit</th>
-      <th>Total Amount</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Min</strong></td>
-      <td>18</td>
-      <td>1</td>
-      <td>25</td>
-      <td>25</td>
-    </tr>
-    <tr>
-      <td><strong>Max</strong></td>
-      <td>64</td>
-      <td>4</td>
-      <td>500</td>
-      <td>2.000</td>
-    </tr>
-    <tr>
-      <td><strong>Rentang</strong></td>
-      <td>46 tahun</td>
-      <td>3 unit</td>
-      <td>475</td>
-      <td>1.975</td>
-    </tr>
-  </tbody>
-</table>
- 
-<ul>
-  <li><strong>Age</strong>: Pelanggan berusia 18 hingga 64 tahun — mencakup segmen dewasa muda hingga lansia awal.</li>
-  <li><strong>Quantity</strong>: Pembelian hanya 1–4 unit per transaksi, menandakan transaksi individual bukan grosir.</li>
-  <li><strong>Price per Unit</strong>: Harga satuan bervariasi besar (25 hingga 500) — mencerminkan perbedaan kategori produk.</li>
-  <li><strong>Total Amount</strong>: Nilai transaksi antara 25 hingga 2.000, sangat dipengaruhi harga satuan dan kuantitas.</li>
-</ul>
- 
-<hr>
- 
-<h2 id="distribusi-variabel">5. Distribusi Variabel Numerik</h2>
- 
-<h3>5.1 Distribusi Total Amount</h3>
- 
-<pre><code>sns.histplot(df["Total Amount"], bins=30, kde=True, color="steelblue")
-plt.title("Distribusi Total Amount Transaksi")
-</code></pre>
- 
-<p><strong>Temuan:</strong> Distribusi <code>Total Amount</code> bersifat <em>multimodal</em> — tidak membentuk satu puncak tunggal melainkan beberapa kelompok. Hal ini terjadi karena harga satuan produk bersifat diskret (25, 30, 50, 300, 500), sehingga total transaksi juga mengelompok di nilai-nilai tertentu.</p>
- 
-<h3>5.2 Distribusi Usia Pelanggan</h3>
- 
-<pre><code>sns.histplot(df["Age"], bins=20, kde=True, color="coral")
-plt.title("Distribusi Usia Pelanggan")
-</code></pre>
- 
-<p><strong>Temuan:</strong> Sebaran usia pelanggan cukup merata di rentang 18–64 tahun, mengindikasikan bahwa toko ini melayani berbagai kelompok usia tanpa dominasi yang ekstrem pada satu segmen tertentu.</p>
- 
-<h3>5.3 Distribusi Quantity</h3>
- 
-<pre><code>quantity_count = df["Quantity"].value_counts().sort_index()
-quantity_count.plot(kind="bar", color="mediumseagreen")
-</code></pre>
- 
-<p><strong>Temuan:</strong> Karena <code>Quantity</code> hanya bernilai 1–4, bar chart digunakan. Distribusinya relatif seimbang di antara keempat nilai tersebut, artinya tidak ada preferensi kuat terhadap jumlah pembelian tertentu.</p>
- 
-<hr>
- 
-<h2 id="outliers">6. Deteksi Outliers</h2>
- 
-<p>Boxplot digunakan untuk mendeteksi outlier pada tiga variabel numerik:</p>
- 
-<pre><code>fig, axes = plt.subplots(1, 3, figsize=(12, 5))
-for ax, col in zip(axes, ["Age", "Price per Unit", "Total Amount"]):
-    sns.boxplot(y=df[col], ax=ax)
-    ax.set_title(f"Boxplot {col}")
-</code></pre>
- 
-<table>
-  <thead>
-    <tr>
-      <th>Variabel</th>
-      <th>Outlier?</th>
-      <th>Penjelasan</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>Age</code></td>
-      <td>Tidak</td>
-      <td>Distribusi normal, tidak ada nilai ekstrem</td>
-    </tr>
-    <tr>
-      <td><code>Price per Unit</code></td>
-      <td>Terlihat lebar</td>
-      <td>Wajar — produk Electronics jauh lebih mahal dari Beauty</td>
-    </tr>
-    <tr>
-      <td><code>Total Amount</code></td>
-      <td>Terlihat lebar</td>
-      <td>Dampak langsung dari variasi harga satuan antar kategori</td>
-    </tr>
-  </tbody>
-</table>
- 
-<blockquote>
-<p>⚠️ Nilai-nilai ekstrem pada <code>Price per Unit</code> dan <code>Total Amount</code> <strong>bukan anomali</strong>, melainkan mencerminkan perbedaan harga yang nyata antar kategori produk.</p>
-</blockquote>
- 
-<hr>
- 
-<h2 id="analisis-gender">7. Analisis Berdasarkan Gender</h2>
- 
-<pre><code>gender_count = df["Gender"].value_counts()
-gender_sales = df.groupby("Gender")["Total Amount"].sum()
-gender_avg   = df.groupby("Gender")["Total Amount"].mean()
-</code></pre>
- 
-<h3>Jumlah Transaksi &amp; Total Penjualan per Gender</h3>
- 
-<table>
-  <thead>
-    <tr>
-      <th>Metrik</th>
-      <th>Female</th>
-      <th>Male</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Jumlah Transaksi</td>
-      <td>~510 (~51%)</td>
-      <td>~490 (~49%)</td>
-    </tr>
-    <tr>
-      <td>Total Penjualan</td>
-      <td>Sedikit lebih tinggi</td>
-      <td>Sedikit lebih rendah</td>
-    </tr>
-    <tr>
-      <td>Rata-rata Transaksi</td>
-      <td>Hampir setara</td>
-      <td>Hampir setara</td>
-    </tr>
-  </tbody>
-</table>
- 
-<p><strong>Temuan:</strong> Proporsi transaksi antara Female dan Male hampir seimbang (~51% vs ~49%). Tidak ada perbedaan signifikan pada rata-rata nilai transaksi per gender, menunjukkan daya beli yang relatif setara. Namun secara total volume, pelanggan Female sedikit mendominasi.</p>
- 
-<hr>
- 
-<h2 id="analisis-kategori">8. Analisis Berdasarkan Kategori Produk</h2>
- 
-<pre><code>category_sales = df.groupby("Product Category")["Total Amount"].sum().sort_values(ascending=False)
-category_count = df["Product Category"].value_counts()
-stats_category = df.groupby("Product Category")["Total Amount"].describe()
-</code></pre>
- 
-<h3>Ringkasan Performa Kategori</h3>
- 
-<table>
-  <thead>
-    <tr>
-      <th>Kategori</th>
-      <th>Jumlah Transaksi</th>
-      <th>Total Penjualan</th>
-      <th>Rata-rata/Transaksi</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Electronics</strong></td>
-      <td>~342</td>
-      <td>Tertinggi</td>
-      <td>Tertinggi (harga satuan besar)</td>
-    </tr>
-    <tr>
-      <td><strong>Clothing</strong></td>
-      <td>~351</td>
-      <td>Menengah</td>
-      <td>Menengah</td>
-    </tr>
-    <tr>
-      <td><strong>Beauty</strong></td>
-      <td>~307</td>
-      <td>Terendah</td>
-      <td>Terendah (harga satuan kecil)</td>
-    </tr>
-  </tbody>
-</table>
- 
-<p><strong>Temuan penting:</strong></p>
-<ul>
-  <li><strong>Electronics</strong> menghasilkan total revenue tertinggi meskipun jumlah transaksinya tidak terbanyak — karena harga satuannya jauh lebih tinggi.</li>
-  <li><strong>Clothing</strong> memiliki frekuensi transaksi terbanyak, namun revenue per transaksi lebih rendah.</li>
-  <li><strong>Beauty</strong> adalah kategori dengan transaksi paling sedikit dan revenue terendah.</li>
-  <li>Ini menunjukkan bahwa <em>volume transaksi ≠ revenue</em> — strategi pricing sangat berpengaruh.</li>
-</ul>
- 
-<hr>
- 
-<h2 id="analisis-temporal">9. Analisis Temporal</h2>
- 
-<h3>9.1 Jumlah Transaksi per Bulan</h3>
- 
-<pre><code>orders_per_month = df.groupby("month_name")["Transaction ID"].count().reindex(month_order)
-orders_per_month.plot(kind="bar", color="steelblue")
-</code></pre>
- 
-<p><strong>Temuan:</strong> Distribusi transaksi sepanjang tahun relatif merata tanpa lonjakan ekstrem. Beberapa bulan menunjukkan sedikit peningkatan yang bisa mengindikasikan adanya musim belanja atau periode promosi tertentu.</p>
- 
-<h3>9.2 Total Penjualan per Bulan</h3>
- 
-<pre><code>sales_per_month = df.groupby("month_name")["Total Amount"].sum().reindex(month_order)
-sales_per_month.plot(marker="o", color="darkorange", linewidth=2)
-</code></pre>
- 
-<p><strong>Temuan:</strong> Tren penjualan bulanan cukup stabil. Line chart membantu mengidentifikasi bulan dengan revenue terbaik dan terlemah untuk perencanaan stok dan anggaran promosi.</p>
- 
-<h3>9.3 Tren per Bulan per Kategori</h3>
- 
-<pre><code>pivot_monthly = df.pivot_table(index="month_name", columns="Product Category",
-                               values="Total Amount", aggfunc="sum").reindex(month_order)
-pivot_monthly.plot(marker="o")
-</code></pre>
- 
-<p><strong>Temuan:</strong> Electronics secara konsisten mendominasi total penjualan bulanan. Clothing dan Beauty memiliki tren yang lebih stabil dan saling berdekatan. Fluktuasi antar bulan terjadi pada semua kategori namun tidak berpola musiman yang jelas.</p>
- 
-<hr>
- 
-<h2 id="analisis-usia">10. Analisis Berdasarkan Kelompok Usia</h2>
- 
-<pre><code>bins   = [17, 25, 35, 45, 55, 65]
-labels = ["18-25", "26-35", "36-45", "46-55", "56-64"]
-df["Age Group"] = pd.cut(df["Age"], bins=bins, labels=labels)
- 
-age_sales = df.groupby("Age Group", observed=True)["Total Amount"].sum()
-age_count = df.groupby("Age Group", observed=True)["Transaction ID"].count()
-</code></pre>
- 
-<h3>Jumlah Transaksi &amp; Total Penjualan per Kelompok Usia</h3>
- 
-<table>
-  <thead>
-    <tr>
-      <th>Kelompok Usia</th>
-      <th>Jumlah Transaksi</th>
-      <th>Kontribusi Penjualan</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>18–25</td>
-      <td>~200</td>
-      <td>Menengah</td>
-    </tr>
-    <tr>
-      <td>26–35</td>
-      <td>~200</td>
-      <td>Menengah</td>
-    </tr>
-    <tr>
-      <td>36–45</td>
-      <td>~200</td>
-      <td>Menengah</td>
-    </tr>
-    <tr>
-      <td>46–55</td>
-      <td>~200</td>
-      <td>Menengah</td>
-    </tr>
-    <tr>
-      <td>56–64</td>
-      <td>~200</td>
-      <td>Menengah</td>
-    </tr>
-  </tbody>
-</table>
- 
-<p><strong>Temuan:</strong> Distribusi transaksi antar kelompok usia sangat merata, menandakan bahwa toko ini berhasil menjangkau <em>semua segmen usia</em> secara setara. Tidak ada kelompok usia yang mendominasi secara signifikan.</p>
- 
-<h3>10.1 Preferensi Kategori per Kelompok Usia</h3>
- 
-<pre><code>pivot_age = df.pivot_table(index="Age Group", columns="Product Category",
-                            values="Total Amount", aggfunc="sum", observed=True)
-pivot_age.plot(kind="bar", colormap="Set2")
-</code></pre>
- 
-<p><strong>Temuan:</strong> Electronics mendominasi pengeluaran di semua kelompok usia. Preferensi relatif terhadap Beauty dan Clothing berbeda-beda antar segmen usia, memberikan peluang untuk personalisasi kampanye pemasaran.</p>
- 
-<hr>
- 
-<h2 id="gender-kategori">11. Hubungan Gender dan Kategori Produk</h2>
- 
-<pre><code>pivot_gender_cat = df.pivot_table(index="Gender", columns="Product Category",
-                               values="Total Amount", aggfunc="sum")
-pivot_gender_cat.plot(kind="bar", colormap="Set1")
-</code></pre>
- 
-<p><strong>Temuan:</strong></p>
-<ul>
-  <li><strong>Electronics</strong> adalah kategori dengan total penjualan tertinggi untuk <em>kedua gender</em>.</li>
-  <li><strong>Female</strong> menunjukkan pengeluaran yang sedikit lebih tinggi pada kategori <strong>Beauty</strong> dan <strong>Clothing</strong>.</li>
-  <li><strong>Male</strong> cenderung lebih banyak berkontribusi pada kategori <strong>Electronics</strong>.</li>
-  <li>Pola ini konsisten dengan ekspektasi umum perilaku belanja berdasarkan gender.</li>
-</ul>
- 
-<hr>
- 
-<h2 id="korelasi">12. Korelasi Fitur Numerik</h2>
- 
-<pre><code>num_cols = ["Age", "Quantity", "Price per Unit", "Total Amount"]
-corr = df[num_cols].corr()
- 
-sns.heatmap(corr, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5)
-plt.title("Korelasi Fitur Numerik")
-</code></pre>
- 
-<h3>Interpretasi Korelasi</h3>
- 
-<table>
-  <thead>
-    <tr>
-      <th>Pasangan Variabel</th>
-      <th>Korelasi</th>
-      <th>Interpretasi</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Price per Unit ↔ Total Amount</td>
-      <td>Tinggi positif</td>
-      <td>Wajar: harga lebih tinggi → total lebih besar</td>
-    </tr>
-    <tr>
-      <td>Quantity ↔ Total Amount</td>
-      <td>Tinggi positif</td>
-      <td>Wajar: lebih banyak unit → total lebih besar</td>
-    </tr>
-    <tr>
-      <td>Age ↔ Total Amount</td>
-      <td>Rendah</td>
-      <td>Usia tidak berhubungan kuat dengan nilai transaksi</td>
-    </tr>
-    <tr>
-      <td>Age ↔ Quantity</td>
-      <td>Sangat rendah</td>
-      <td>Usia tidak memengaruhi jumlah unit yang dibeli</td>
-    </tr>
-  </tbody>
-</table>
- 
-<blockquote>
-<p>💡 Korelasi tinggi antara <code>Price per Unit</code>, <code>Quantity</code>, dan <code>Total Amount</code> adalah <strong>matematis</strong> — karena <code>Total Amount = Quantity × Price per Unit</code>.</p>
-</blockquote>
- 
-<h3>Scatter Plot: Quantity vs Total Amount</h3>
- 
-<pre><code>sns.scatterplot(data=df, x="Quantity", y="Total Amount",
-                hue="Product Category", alpha=0.6, palette="Set2")
-</code></pre>
- 
-<p><strong>Temuan:</strong> Scatter plot memperlihatkan <em>kelompok-kelompok harga</em> yang jelas. Electronics dan Clothing menempati rentang Total Amount yang jauh lebih tinggi dibandingkan Beauty, karena harga satuan yang berbeda signifikan.</p>
- 
-<hr>
- 
-<h2 id="ringkasan">13. Ringkasan &amp; Kesimpulan</h2>
- 
-<h3>Temuan Utama</h3>
- 
-<table>
-  <thead>
-    <tr>
-      <th>Area Analisis</th>
-      <th>Temuan Kunci</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Kualitas Data</strong></td>
-      <td>Dataset bersih: 0 missing values, 0 duplikat, tipe data konsisten</td>
-    </tr>
-    <tr>
-      <td><strong>Distribusi</strong></td>
-      <td>Total Amount multimodal akibat harga diskret; Quantity merata di 1–4 unit</td>
-    </tr>
-    <tr>
-      <td><strong>Gender</strong></td>
-      <td>Proporsi transaksi hampir setara (~51% Female, ~49% Male); daya beli serupa</td>
-    </tr>
-    <tr>
-      <td><strong>Kategori Produk</strong></td>
-      <td>Electronics = revenue tertinggi; Clothing = transaksi terbanyak; Beauty = terendah keduanya</td>
-    </tr>
-    <tr>
-      <td><strong>Tren Temporal</strong></td>
-      <td>Penjualan stabil sepanjang tahun tanpa musim belanja yang jelas</td>
-    </tr>
-    <tr>
-      <td><strong>Kelompok Usia</strong></td>
-      <td>Semua segmen usia berkontribusi merata; Electronics dominan di semua kelompok</td>
-    </tr>
-    <tr>
-      <td><strong>Gender × Kategori</strong></td>
-      <td>Female lebih ke Beauty &amp; Clothing; Male lebih ke Electronics</td>
-    </tr>
-    <tr>
-      <td><strong>Korelasi</strong></td>
-      <td>Total Amount dipengaruhi kuat oleh Price per Unit dan Quantity; Age hampir tidak berkorelasi</td>
-    </tr>
-  </tbody>
-</table>
- 
-<h3>Rekomendasi Bisnis</h3>
- 
-<ol>
-  <li><strong>Fokus pada Electronics</strong> — Kategori ini menghasilkan revenue terbesar. Pastikan stok cukup dan pertimbangkan bundling promosi.</li>
-  <li><strong>Strategi berbasis Gender</strong> — Kampanye Beauty dan Clothing lebih efektif diarahkan ke Female, sementara Electronics ke Male.</li>
-  <li><strong>Personalisasi per Usia</strong> — Meski semua segmen berkontribusi merata, preferensi sub-kategori berbeda antar kelompok usia.</li>
-  <li><strong>Investigasi Musim</strong> — Data perlu dikumpulkan lebih dari 1 tahun untuk mengidentifikasi pola musiman yang lebih kuat.</li>
-  <li><strong>Analisis Lanjutan</strong> — Pertimbangkan analisis RFM (Recency, Frequency, Monetary) untuk segmentasi pelanggan yang lebih mendalam.</li>
-</ol>
- 
-<hr>
- 
-<h3>Checklist Analisis yang Telah Dilakukan</h3>
- 
-<ul>
-  <li>✅ Load dan inspeksi struktur dataset (1.000 baris, 9 kolom)</li>
-  <li>✅ Konversi kolom <code>Date</code> ke datetime dan ekstraksi fitur temporal</li>
-  <li>✅ Pengecekan missing values dan data duplikat</li>
-  <li>✅ Analisis distribusi Total Amount, Age, dan Quantity</li>
-  <li>✅ Deteksi outlier dengan boxplot</li>
-  <li>✅ Analisis pola transaksi dan penjualan berdasarkan Gender</li>
-  <li>✅ Analisis komposisi dan performa berdasarkan Kategori Produk</li>
-  <li>✅ Tren temporal bulanan (transaksi dan penjualan)</li>
-  <li>✅ Segmentasi berdasarkan Kelompok Usia dan preferensi kategori</li>
-  <li>✅ Eksplorasi kombinasi Gender × Kategori Produk</li>
-  <li>✅ Korelasi antar variabel numerik dan scatter plot</li>
-</ul>
- 
-<hr>
- 
-<p><em>Laporan ini dibuat dari notebook EDA Retail Sales Dataset menggunakan Python (Pandas, Matplotlib, Seaborn).</em></p>
+<body style="font-family: Georgia, 'Times New Roman', serif; max-width: 900px; margin: 40px auto; padding: 0 24px; color: #1a1a1a; line-height: 1.8; background: #fff;">
+ 
+  <!-- HEADER -->
+  <div style="border-top: 4px solid #2c3e50; border-bottom: 1px solid #ccc; padding: 32px 0 24px; margin-bottom: 40px;">
+    <p style="font-family: 'Courier New', monospace; font-size: 12px; color: #888; margin: 0 0 8px; letter-spacing: 2px; text-transform: uppercase;">Exploratory Data Analysis</p>
+    <h1 style="font-size: 2.2em; font-weight: bold; margin: 0 0 12px; color: #2c3e50; line-height: 1.2;">Retail Sales Dataset</h1>
+    <p style="font-size: 1em; color: #555; margin: 0;">
+      Analisis mendalam terhadap 1.000 transaksi retail — meliputi pola pembelian, segmentasi pelanggan, performa kategori produk, dan tren penjualan bulanan.
+    </p>
+    <div style="margin-top: 16px; display: flex; gap: 16px; flex-wrap: wrap;">
+      <span style="background: #ecf0f1; padding: 4px 12px; border-radius: 4px; font-size: 13px; font-family: monospace;">1.000 transaksi</span>
+      <span style="background: #ecf0f1; padding: 4px 12px; border-radius: 4px; font-size: 13px; font-family: monospace;">9 kolom</span>
+      <span style="background: #ecf0f1; padding: 4px 12px; border-radius: 4px; font-size: 13px; font-family: monospace;">Python · Pandas · Seaborn</span>
+    </div>
+  </div>
+ 
+  <!-- DAFTAR ISI -->
+  <nav style="background: #f8f9fa; border-left: 4px solid #2c3e50; padding: 20px 24px; margin-bottom: 48px; border-radius: 0 6px 6px 0;">
+    <p style="font-weight: bold; margin: 0 0 12px; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: #2c3e50;">Daftar Isi</p>
+    <ol style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 2;">
+      <li><a href="#s1" style="color: #2980b9; text-decoration: none;">Gambaran Dataset</a></li>
+      <li><a href="#s2" style="color: #2980b9; text-decoration: none;">Kualitas Data</a></li>
+      <li><a href="#s3" style="color: #2980b9; text-decoration: none;">Statistik Deskriptif</a></li>
+      <li><a href="#s4" style="color: #2980b9; text-decoration: none;">Distribusi Variabel Numerik</a></li>
+      <li><a href="#s5" style="color: #2980b9; text-decoration: none;">Deteksi Outliers</a></li>
+      <li><a href="#s6" style="color: #2980b9; text-decoration: none;">Analisis Berdasarkan Gender</a></li>
+      <li><a href="#s7" style="color: #2980b9; text-decoration: none;">Analisis Berdasarkan Kategori Produk</a></li>
+      <li><a href="#s8" style="color: #2980b9; text-decoration: none;">Tren Temporal (Bulanan)</a></li>
+      <li><a href="#s9" style="color: #2980b9; text-decoration: none;">Segmentasi Kelompok Usia</a></li>
+      <li><a href="#s10" style="color: #2980b9; text-decoration: none;">Hubungan Gender × Kategori Produk</a></li>
+      <li><a href="#s11" style="color: #2980b9; text-decoration: none;">Korelasi Antar Variabel</a></li>
+      <li><a href="#s12" style="color: #2980b9; text-decoration: none;">Kesimpulan &amp; Rekomendasi</a></li>
+    </ol>
+  </nav>
+ 
+ 
+  <!-- SECTION 1 -->
+  <section id="s1" style="margin-bottom: 48px;">
+    <h2 style="font-size: 1.5em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px;">1. Gambaran Dataset</h2>
+ 
+    <p>Dataset ini merekam <strong>1.000 transaksi retail</strong> yang mencakup informasi pelanggan, produk yang dibeli, hingga nilai transaksi. Setiap baris merepresentasikan satu kejadian pembelian yang unik.</p>
+ 
+    <p>Berikut adalah struktur lengkap dari 9 kolom yang tersedia:</p>
+ 
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+      <thead>
+        <tr style="background: #2c3e50; color: white;">
+          <th style="padding: 10px 14px; text-align: left;">Kolom</th>
+          <th style="padding: 10px 14px; text-align: left;">Tipe</th>
+          <th style="padding: 10px 14px; text-align: left;">Deskripsi</th>
+          <th style="padding: 10px 14px; text-align: left;">Rentang / Nilai</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Transaction ID</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">object</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Identifikasi unik tiap transaksi</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">—</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Date</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">datetime</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Tanggal transaksi terjadi</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">—</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Customer ID</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">object</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Identifikasi unik tiap pelanggan</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">—</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Gender</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">object</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Jenis kelamin pelanggan</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Male / Female</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Age</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">int64</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Usia pelanggan</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">18 – 64 tahun</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Product Category</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">object</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Kategori produk yang dibeli</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Beauty / Clothing / Electronics</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Quantity</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">int64</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Jumlah unit yang dibeli</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">1 – 4 unit</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Price per Unit</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">float64</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Harga satuan produk</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">25 – 500</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px;"><code>Total Amount</code></td>
+          <td style="padding: 9px 14px;">float64</td>
+          <td style="padding: 9px 14px;">Total nilai transaksi</td>
+          <td style="padding: 9px 14px;">25 – 2.000</td>
+        </tr>
+      </tbody>
+    </table>
+ 
+    <p>Setelah data dimuat, kolom <code>Date</code> dikonversi ke format <code>datetime</code> dan diekstrak menjadi fitur turunan: <code>year</code>, <code>month</code>, <code>day</code>, dan <code>month_name</code>. Fitur ini digunakan untuk analisis temporal di bagian selanjutnya.</p>
+  </section>
+ 
+ 
+  <!-- SECTION 2 -->
+  <section id="s2" style="margin-bottom: 48px;">
+    <h2 style="font-size: 1.5em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px;">2. Kualitas Data</h2>
+ 
+    <p>Sebelum melakukan analisis, integritas data diperiksa dari tiga aspek: nilai kosong, baris duplikat, dan konsistensi nilai kategorik.</p>
+ 
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+      <thead>
+        <tr style="background: #2c3e50; color: white;">
+          <th style="padding: 10px 14px; text-align: left;">Pemeriksaan</th>
+          <th style="padding: 10px 14px; text-align: center;">Hasil</th>
+          <th style="padding: 10px 14px; text-align: left;">Kesimpulan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Missing values</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center; color: #27ae60; font-weight: bold;">0</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Tidak ada nilai kosong di seluruh kolom</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Baris duplikat</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center; color: #27ae60; font-weight: bold;">0</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Setiap baris adalah transaksi yang unik</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Nilai unik <code>Gender</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center; color: #27ae60; font-weight: bold;">2</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Hanya berisi <code>Male</code> dan <code>Female</code></td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px;">Nilai unik <code>Product Category</code></td>
+          <td style="padding: 9px 14px; text-align: center; color: #27ae60; font-weight: bold;">3</td>
+          <td style="padding: 9px 14px;">Hanya berisi Beauty, Clothing, Electronics</td>
+        </tr>
+      </tbody>
+    </table>
+ 
+    <blockquote style="border-left: 4px solid #27ae60; padding: 12px 20px; margin: 20px 0; background: #f0faf4; color: #1e8449; border-radius: 0 6px 6px 0;">
+      <strong>✅ Dataset bersih dan siap dianalisis</strong> — tidak diperlukan langkah data cleaning, imputasi, atau penghapusan duplikat.
+    </blockquote>
+  </section>
+ 
+ 
+  <!-- SECTION 3 -->
+  <section id="s3" style="margin-bottom: 48px;">
+    <h2 style="font-size: 1.5em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px;">3. Statistik Deskriptif</h2>
+ 
+    <p>Ringkasan statistik untuk keempat variabel numerik utama memberikan gambaran awal tentang skala dan sebaran data.</p>
+ 
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+      <thead>
+        <tr style="background: #2c3e50; color: white;">
+          <th style="padding: 10px 14px; text-align: left;">Statistik</th>
+          <th style="padding: 10px 14px; text-align: center;">Age</th>
+          <th style="padding: 10px 14px; text-align: center;">Quantity</th>
+          <th style="padding: 10px 14px; text-align: center;">Price per Unit</th>
+          <th style="padding: 10px 14px; text-align: center;">Total Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Min</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">18</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">1</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">25</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">25</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Max</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">64</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">4</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">500</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">2.000</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; font-weight: bold;">Rentang</td>
+          <td style="padding: 9px 14px; text-align: center;">46 tahun</td>
+          <td style="padding: 9px 14px; text-align: center;">3 unit</td>
+          <td style="padding: 9px 14px; text-align: center;">475</td>
+          <td style="padding: 9px 14px; text-align: center;">1.975</td>
+        </tr>
+      </tbody>
+    </table>
+ 
+    <p>Ada beberapa hal yang langsung terlihat dari tabel ini:</p>
+ 
+    <ul>
+      <li><strong>Age (18–64 tahun):</strong> Pelanggan mencakup rentang usia yang sangat luas, dari dewasa muda hingga lansia awal. Ini mengindikasikan toko yang menjangkau berbagai generasi sekaligus.</li>
+      <li><strong>Quantity (1–4 unit):</strong> Pembelian hanya berkisar 1 hingga 4 unit per transaksi — ini adalah pola belanja konsumen akhir (retail), bukan pembelian grosir atau bisnis.</li>
+      <li><strong>Price per Unit (25–500):</strong> Rentang harga yang sangat lebar mencerminkan perbedaan kategori produk yang mencolok. Produk Beauty berada di sisi bawah, Electronics di sisi atas.</li>
+      <li><strong>Total Amount (25–2.000):</strong> Nilai transaksi terbentuk dari perkalian Quantity × Price per Unit, sehingga variabilitasnya sangat besar dan dipengaruhi kategori produk.</li>
+    </ul>
+  </section>
+ 
+ 
+  <!-- SECTION 4 -->
+  <section id="s4" style="margin-bottom: 48px;">
+    <h2 style="font-size: 1.5em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px;">4. Distribusi Variabel Numerik</h2>
+ 
+    <h3 style="font-size: 1.1em; color: #34495e; margin-top: 24px;">4.1 Total Amount — Distribusi Multimodal</h3>
+    <p>Distribusi <code>Total Amount</code> divisualisasikan dengan histogram + KDE (Kernel Density Estimation). Hasilnya <strong>tidak membentuk satu puncak tunggal (unimodal)</strong>, melainkan beberapa puncak yang mencerminkan kelompok-kelompok harga diskret.</p>
+    <p>Ini terjadi karena <code>Price per Unit</code> hanya mengambil beberapa nilai tetap (misalnya 25, 30, 50, 300, 500). Ketika dikalikan dengan <code>Quantity</code> (1–4), total transaksi akan mengelompok di titik-titik tertentu. Pola ini disebut <em>distribusi multimodal</em> dan merupakan artefak dari struktur pricing yang bersifat diskret, bukan indikasi masalah data.</p>
+ 
+    <h3 style="font-size: 1.1em; color: #34495e; margin-top: 24px;">4.2 Usia Pelanggan — Distribusi Merata</h3>
+    <p>Distribusi usia pelanggan menunjukkan pola yang relatif <strong>datar (uniform)</strong> dari usia 18 hingga 64 tahun. Tidak ada kelompok usia yang tampak mendominasi secara dramatis. Ini adalah tanda bahwa toko ini berhasil menarik pelanggan dari berbagai generasi secara seimbang — dari Gen Z, Milenial, Gen X, hingga Baby Boomer.</p>
+ 
+    <h3 style="font-size: 1.1em; color: #34495e; margin-top: 24px;">4.3 Quantity — Preferensi Pembelian Merata</h3>
+    <p>Karena <code>Quantity</code> hanya bernilai bilangan bulat 1, 2, 3, atau 4, visualisasi yang tepat adalah <strong>bar chart</strong> (bukan histogram). Hasilnya menunjukkan frekuensi yang hampir seimbang di antara keempat nilai tersebut. Artinya pelanggan tidak memiliki preferensi kuat terhadap jumlah unit tertentu — pembelian 1 unit sama umum dengan pembelian 4 unit.</p>
+  </section>
+ 
+ 
+  <!-- SECTION 5 -->
+  <section id="s5" style="margin-bottom: 48px;">
+    <h2 style="font-size: 1.5em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px;">5. Deteksi Outliers</h2>
+ 
+    <p>Boxplot digunakan untuk mendeteksi nilai-nilai ekstrem pada tiga variabel numerik. Berikut interpretasinya:</p>
+ 
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+      <thead>
+        <tr style="background: #2c3e50; color: white;">
+          <th style="padding: 10px 14px; text-align: left;">Variabel</th>
+          <th style="padding: 10px 14px; text-align: center;">Outlier?</th>
+          <th style="padding: 10px 14px; text-align: left;">Penjelasan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Age</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center; color: #27ae60;">Tidak</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Distribusi merata tanpa nilai ekstrem</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Price per Unit</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center; color: #e67e22;">Rentang lebar</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Wajar — harga Electronics jauh lebih tinggi dari Beauty</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px;"><code>Total Amount</code></td>
+          <td style="padding: 9px 14px; text-align: center; color: #e67e22;">Rentang lebar</td>
+          <td style="padding: 9px 14px;">Dampak langsung dari variasi harga antar kategori produk</td>
+        </tr>
+      </tbody>
+    </table>
+ 
+    <blockquote style="border-left: 4px solid #e67e22; padding: 12px 20px; margin: 20px 0; background: #fef9f0; color: #784212; border-radius: 0 6px 6px 0;">
+      <strong>⚠️ Catatan penting:</strong> Nilai-nilai yang terlihat "ekstrem" pada <code>Price per Unit</code> dan <code>Total Amount</code> bukanlah anomali data yang perlu dihapus. Mereka mencerminkan perbedaan harga yang nyata dan valid antara kategori produk (Electronics vs Beauty). Menghapusnya justru akan menghilangkan informasi berharga tentang produk mahal.
+    </blockquote>
+  </section>
+ 
+ 
+  <!-- SECTION 6 -->
+  <section id="s6" style="margin-bottom: 48px;">
+    <h2 style="font-size: 1.5em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px;">6. Analisis Berdasarkan Gender</h2>
+ 
+    <p>Analisis ini membandingkan perilaku belanja antara pelanggan pria dan wanita dari dua sudut pandang: volume transaksi dan total nilai penjualan.</p>
+ 
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+      <thead>
+        <tr style="background: #2c3e50; color: white;">
+          <th style="padding: 10px 14px; text-align: left;">Metrik</th>
+          <th style="padding: 10px 14px; text-align: center;">Female</th>
+          <th style="padding: 10px 14px; text-align: center;">Male</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Proporsi Transaksi</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">~51%</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">~49%</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Total Penjualan</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">Sedikit lebih tinggi</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">Sedikit lebih rendah</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px;">Rata-rata Nilai Transaksi</td>
+          <td style="padding: 9px 14px; text-align: center;">Hampir setara</td>
+          <td style="padding: 9px 14px; text-align: center;">Hampir setara</td>
+        </tr>
+      </tbody>
+    </table>
+ 
+    <p><strong>Interpretasi:</strong> Meskipun pelanggan Female sedikit lebih banyak bertransaksi (~51%), perbedaan ini tidak signifikan secara praktis. Yang lebih penting, <strong>rata-rata nilai transaksi per gender hampir identik</strong> — artinya daya beli dan pola pengeluaran antara pria dan wanita sangat mirip dalam dataset ini. Tidak ada gender yang secara konsisten "berbelanja lebih mahal" dari yang lain.</p>
+ 
+    <p>Temuan ini mengindikasikan bahwa strategi harga dan promosi umum kemungkinan efektif untuk kedua gender. Namun, perbedaan baru akan muncul ketika kita melihat <em>jenis produk</em> yang dibeli — dibahas di Bagian 10.</p>
+  </section>
+ 
+ 
+  <!-- SECTION 7 -->
+  <section id="s7" style="margin-bottom: 48px;">
+    <h2 style="font-size: 1.5em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px;">7. Analisis Berdasarkan Kategori Produk</h2>
+ 
+    <p>Tiga kategori produk — <strong>Beauty</strong>, <strong>Clothing</strong>, dan <strong>Electronics</strong> — dianalisis dari dua dimensi: frekuensi transaksi dan kontribusi revenue.</p>
+ 
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+      <thead>
+        <tr style="background: #2c3e50; color: white;">
+          <th style="padding: 10px 14px; text-align: left;">Kategori</th>
+          <th style="padding: 10px 14px; text-align: center;">Transaksi</th>
+          <th style="padding: 10px 14px; text-align: center;">Total Revenue</th>
+          <th style="padding: 10px 14px; text-align: center;">Rata-rata/Transaksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #eaf4fb;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Electronics</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">~342</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;"><strong>🥇 Tertinggi</strong></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">Tertinggi</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Clothing</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;"><strong>~351 🥇</strong></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">Menengah</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">Menengah</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; font-weight: bold;">Beauty</td>
+          <td style="padding: 9px 14px; text-align: center;">~307</td>
+          <td style="padding: 9px 14px; text-align: center;">Terendah</td>
+          <td style="padding: 9px 14px; text-align: center;">Terendah</td>
+        </tr>
+      </tbody>
+    </table>
+ 
+    <p>Ada temuan yang sangat menarik di sini: <strong>Clothing memiliki jumlah transaksi terbanyak, namun Electronics menghasilkan revenue tertinggi</strong>. Ini terjadi karena harga satuan Electronics jauh lebih tinggi, sehingga meskipun tidak sering dibeli, setiap transaksinya bernilai jauh lebih besar.</p>
+ 
+    <p>Sebaliknya, Beauty memiliki transaksi paling sedikit <em>sekaligus</em> revenue terendah — kombinasi yang menempatkannya sebagai kategori dengan kinerja paling lemah dari kedua dimensi. Ini bisa menjadi sinyal untuk mengevaluasi strategi promosi untuk kategori Beauty.</p>
+ 
+    <blockquote style="border-left: 4px solid #2980b9; padding: 12px 20px; margin: 20px 0; background: #eaf4fb; color: #1a5276; border-radius: 0 6px 6px 0;">
+      <strong>💡 Insight kunci:</strong> Frekuensi transaksi ≠ revenue. Electronics adalah "sapi perah" utama meskipun tidak paling sering terjual. Strategi yang berbeda diperlukan untuk mengoptimalkan tiap kategori.
+    </blockquote>
+  </section>
+ 
+ 
+  <!-- SECTION 8 -->
+  <section id="s8" style="margin-bottom: 48px;">
+    <h2 style="font-size: 1.5em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px;">8. Tren Temporal (Bulanan)</h2>
+ 
+    <p>Analisis temporal dilakukan dengan mengagregasi data berdasarkan bulan, menggunakan fitur <code>month_name</code> yang diekstrak dari kolom <code>Date</code>.</p>
+ 
+    <h3 style="font-size: 1.1em; color: #34495e; margin-top: 24px;">8.1 Jumlah Transaksi per Bulan</h3>
+    <p>Bar chart jumlah transaksi per bulan menunjukkan pola yang <strong>relatif stabil sepanjang tahun</strong>. Tidak ada lonjakan atau penurunan ekstrem yang mencolok di bulan tertentu. Distribusi yang merata ini mengindikasikan tidak adanya musim belanja yang sangat dominan — bisnis berjalan cukup konsisten setiap bulannya.</p>
+ 
+    <h3 style="font-size: 1.1em; color: #34495e; margin-top: 24px;">8.2 Total Penjualan per Bulan</h3>
+    <p>Line chart total penjualan bulanan memperlihatkan fluktuasi yang moderat namun tanpa tren kenaikan atau penurunan yang signifikan secara keseluruhan. Beberapa bulan menunjukkan sedikit peningkatan yang bisa dikaitkan dengan musim tertentu, namun perlu data lebih dari satu tahun untuk mengonfirmasi pola musiman yang nyata.</p>
+ 
+    <h3 style="font-size: 1.1em; color: #34495e; margin-top: 24px;">8.3 Tren per Kategori per Bulan</h3>
+    <p>Ketika tren penjualan dipecah per kategori, terlihat bahwa <strong>Electronics secara konsisten mendominasi total penjualan</strong> di hampir setiap bulan. Clothing dan Beauty berjalan berdekatan di kisaran nilai yang lebih rendah. Ketiga kategori mengalami fluktuasi di bulan yang berbeda, namun tidak saling berkorelasi kuat — artinya naik-turunnya satu kategori tidak selalu diikuti kategori lain.</p>
+ 
+    <blockquote style="border-left: 4px solid #8e44ad; padding: 12px 20px; margin: 20px 0; background: #f5eef8; color: #4a235a; border-radius: 0 6px 6px 0;">
+      <strong>📅 Rekomendasi:</strong> Untuk mendapatkan insight musiman yang lebih kuat (seperti lonjakan di akhir tahun atau musim liburan), diperlukan data historis minimal 2–3 tahun. Dataset saat ini hanya mencakup satu periode.
+    </blockquote>
+  </section>
+ 
+ 
+  <!-- SECTION 9 -->
+  <section id="s9" style="margin-bottom: 48px;">
+    <h2 style="font-size: 1.5em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px;">9. Segmentasi Kelompok Usia</h2>
+ 
+    <p>Pelanggan dikelompokkan ke dalam 5 segmen usia menggunakan fungsi <code>pd.cut()</code>:</p>
+ 
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+      <thead>
+        <tr style="background: #2c3e50; color: white;">
+          <th style="padding: 10px 14px;">Kelompok Usia</th>
+          <th style="padding: 10px 14px; text-align: center;">Jumlah Transaksi</th>
+          <th style="padding: 10px 14px; text-align: left;">Karakteristik</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">18–25 tahun</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">~200</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Dewasa muda, Gen Z</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">26–35 tahun</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">~200</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Milenial muda</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">36–45 tahun</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">~200</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Milenial senior</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">46–55 tahun</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">~200</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Gen X</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px;">56–64 tahun</td>
+          <td style="padding: 9px 14px; text-align: center;">~200</td>
+          <td style="padding: 9px 14px;">Baby Boomer</td>
+        </tr>
+      </tbody>
+    </table>
+ 
+    <p>Distribusi yang <strong>sangat merata (~200 transaksi per kelompok)</strong> ini menunjukkan bahwa toko berhasil menjangkau semua segmen usia secara proporsional. Tidak ada kelompok usia yang mendominasi, yang merupakan tanda kesehatan bisnis dari sisi diversifikasi pelanggan.</p>
+ 
+    <p>Namun, ketika dianalisis lebih dalam per kategori produk, perbedaan preferensi mulai terlihat. Electronics tetap dominan di semua kelompok usia, tetapi proporsi relatif antara Beauty dan Clothing bergeser antar segmen — memberikan peluang untuk kampanye yang lebih personal.</p>
+  </section>
+ 
+ 
+  <!-- SECTION 10 -->
+  <section id="s10" style="margin-bottom: 48px;">
+    <h2 style="font-size: 1.5em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px;">10. Hubungan Gender × Kategori Produk</h2>
+ 
+    <p>Analisis pivot table mengungkap pola yang lebih nuansir ketika gender dikombinasikan dengan kategori produk.</p>
+ 
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+      <thead>
+        <tr style="background: #2c3e50; color: white;">
+          <th style="padding: 10px 14px;">Kategori</th>
+          <th style="padding: 10px 14px; text-align: center;">Female</th>
+          <th style="padding: 10px 14px; text-align: center;">Male</th>
+          <th style="padding: 10px 14px; text-align: left;">Pola</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Electronics</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">Tinggi</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;"><strong>Lebih tinggi</strong></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Male cenderung lebih dominan</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Clothing</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;"><strong>Lebih tinggi</strong></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center;">Menengah</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Female lebih aktif berbelanja pakaian</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; font-weight: bold;">Beauty</td>
+          <td style="padding: 9px 14px; text-align: center;"><strong>Lebih tinggi</strong></td>
+          <td style="padding: 9px 14px; text-align: center;">Rendah</td>
+          <td style="padding: 9px 14px;">Female mendominasi pembelian produk kecantikan</td>
+        </tr>
+      </tbody>
+    </table>
+ 
+    <p>Pola yang muncul konsisten dengan perilaku belanja yang umum: <strong>Female lebih mendominasi pada Beauty dan Clothing</strong>, sementara <strong>Male lebih aktif pada Electronics</strong>. Meskipun total nilai transaksi per gender hampir setara (lihat Bagian 6), jenis produk yang dibeli berbeda secara signifikan.</p>
+ 
+    <p>Insight ini memiliki implikasi langsung pada strategi pemasaran: promosi produk kecantikan dan fashion akan lebih efektif bila diarahkan ke segmen Female, sedangkan kampanye gadget dan elektronik lebih resonan untuk segmen Male.</p>
+  </section>
+ 
+ 
+  <!-- SECTION 11 -->
+  <section id="s11" style="margin-bottom: 48px;">
+    <h2 style="font-size: 1.5em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px;">11. Korelasi Antar Variabel</h2>
+ 
+    <p>Heatmap korelasi Pearson dihitung untuk keempat variabel numerik: <code>Age</code>, <code>Quantity</code>, <code>Price per Unit</code>, dan <code>Total Amount</code>.</p>
+ 
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+      <thead>
+        <tr style="background: #2c3e50; color: white;">
+          <th style="padding: 10px 14px;">Pasangan Variabel</th>
+          <th style="padding: 10px 14px; text-align: center;">Korelasi</th>
+          <th style="padding: 10px 14px; text-align: left;">Interpretasi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Price per Unit</code> ↔ <code>Total Amount</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center; color: #27ae60; font-weight: bold;">Tinggi (+)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Harga lebih mahal → total lebih besar</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Quantity</code> ↔ <code>Total Amount</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center; color: #27ae60; font-weight: bold;">Tinggi (+)</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Lebih banyak unit → total lebih besar</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;"><code>Age</code> ↔ <code>Total Amount</code></td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; text-align: center; color: #7f8c8d;">Sangat rendah</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Usia tidak mempengaruhi nilai transaksi</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px;"><code>Age</code> ↔ <code>Quantity</code></td>
+          <td style="padding: 9px 14px; text-align: center; color: #7f8c8d;">Sangat rendah</td>
+          <td style="padding: 9px 14px;">Usia tidak mempengaruhi jumlah unit yang dibeli</td>
+        </tr>
+      </tbody>
+    </table>
+ 
+    <p>Korelasi tinggi antara <code>Price per Unit</code>, <code>Quantity</code>, dan <code>Total Amount</code> adalah <strong>hubungan matematis</strong> yang sudah diharapkan — karena <code>Total Amount = Quantity × Price per Unit</code>. Ini bukan temuan yang mengejutkan.</p>
+ 
+    <p>Yang lebih menarik adalah <strong>korelasi yang sangat rendah antara <code>Age</code> dan semua variabel lainnya</strong>. Ini mengonfirmasi temuan dari analisis kelompok usia: usia pelanggan tidak menentukan seberapa banyak atau seberapa mahal mereka berbelanja. Faktor penentu nilai transaksi lebih banyak bergantung pada <em>kategori produk</em> yang dipilih, bukan usia pembelinya.</p>
+ 
+    <p>Scatter plot <code>Quantity</code> vs <code>Total Amount</code> yang dibagi per kategori produk memperlihatkan <strong>kluster-kluster yang terpisah jelas</strong>: Electronics dan Clothing menempati rentang atas, sementara Beauty berada di rentang bawah — perbedaan yang sepenuhnya driven oleh <code>Price per Unit</code>.</p>
+  </section>
+ 
+ 
+  <!-- SECTION 12 -->
+  <section id="s12" style="margin-bottom: 48px;">
+    <h2 style="font-size: 1.5em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px;">12. Kesimpulan &amp; Rekomendasi</h2>
+ 
+    <h3 style="font-size: 1.1em; color: #34495e; margin-top: 24px;">Ringkasan Temuan Utama</h3>
+ 
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+      <thead>
+        <tr style="background: #2c3e50; color: white;">
+          <th style="padding: 10px 14px;">Area</th>
+          <th style="padding: 10px 14px;">Temuan Kunci</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Kualitas Data</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Bersih sempurna — 0 missing values, 0 duplikat, nilai kategorik konsisten</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Distribusi</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Total Amount multimodal akibat harga diskret; Age dan Quantity terdistribusi merata</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Gender</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Proporsi hampir setara (~51%/49%); daya beli serupa; beda pada preferensi kategori</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Kategori Produk</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Electronics = revenue tertinggi; Clothing = transaksi terbanyak; Beauty = keduanya terendah</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Tren Temporal</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Stabil sepanjang tahun; tidak ada pola musiman yang jelas dari satu periode data</td>
+        </tr>
+        <tr>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Kelompok Usia</td>
+          <td style="padding: 9px 14px; border-bottom: 1px solid #e0e0e0;">Merata di semua segmen; usia tidak berkorelasi dengan nilai transaksi</td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="padding: 9px 14px; font-weight: bold;">Gender × Kategori</td>
+          <td style="padding: 9px 14px;">Female dominan di Beauty &amp; Clothing; Male dominan di Electronics</td>
+        </tr>
+      </tbody>
+    </table>
+ 
+    <h3 style="font-size: 1.1em; color: #34495e; margin-top: 32px;">Rekomendasi Bisnis</h3>
+ 
+    <ol style="line-height: 2.2; padding-left: 20px;">
+      <li>
+        <strong>Prioritaskan kategori Electronics</strong> — Kontribusi revenue-nya paling besar. Pastikan ketersediaan stok, pertimbangkan bundling promosi, dan alokasikan anggaran display yang lebih besar untuk kategori ini.
+      </li>
+      <li>
+        <strong>Revitalisasi kategori Beauty</strong> — Kategori ini memiliki kinerja paling lemah dari sisi transaksi maupun revenue. Perlu dievaluasi: apakah karena kurangnya promosi, keterbatasan pilihan produk, atau harga yang kurang kompetitif.
+      </li>
+      <li>
+        <strong>Targetkan kampanye berdasarkan gender</strong> — Promosi Beauty dan Clothing akan lebih efektif diarahkan ke segmen Female; kampanye Electronics lebih resonan untuk Male. Ini berlaku untuk iklan digital, email marketing, maupun tata letak toko.
+      </li>
+      <li>
+        <strong>Manfaatkan distribusi usia yang merata</strong> — Karena semua kelompok usia terwakili secara seimbang, ada peluang untuk membuat kampanye yang tersegmentasi per generasi tanpa mengabaikan salah satu kelompok.
+      </li>
+      <li>
+        <strong>Kumpulkan data multi-tahun</strong> — Tren temporal saat ini tidak menunjukkan pola musiman yang jelas. Dengan data 2–3 tahun, manajemen dapat mengidentifikasi bulan-bulan puncak untuk perencanaan stok dan promosi yang lebih akurat.
+      </li>
+      <li>
+        <strong>Lanjutkan ke analisis RFM</strong> — Langkah analitik berikutnya yang direkomendasikan adalah analisis Recency-Frequency-Monetary untuk mengidentifikasi pelanggan loyal, pelanggan berisiko churn, dan prospek upsell.
+      </li>
+    </ol>
+ 
+  </section>
+ 
+ 
+  <!-- FOOTER -->
+  <hr style="border: none; border-top: 1px solid #ccc; margin: 40px 0 20px;">
+  <p style="font-size: 13px; color: #888; text-align: center; font-family: 'Courier New', monospace;">
+    Laporan EDA · Retail Sales Dataset · Python (Pandas, Matplotlib, Seaborn)
+  </p>
  
 </body>
 </html>
